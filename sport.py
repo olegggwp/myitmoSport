@@ -70,7 +70,7 @@ def token_upd(storage_data, token_update_config):
 
 params = {
     "building_id": "273",
-    "date_start": "2024-01-22",
+    "date_start": "2024-01-23",
     "date_end": "2024-01-30",
 }
 
@@ -79,7 +79,7 @@ def unix_to_time(unix):
     return time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(unix))
 
 
-def get_slots():
+def print_slots():
     global storage_data, params
     cookies, headers = storage_data["cookies"], storage_data["headers"]
     response = requests.get(
@@ -89,6 +89,7 @@ def get_slots():
         headers=headers,
     )
     data = response.json()
+    
     print(
         "==new data==============================================================="
     )
@@ -103,6 +104,21 @@ def get_slots():
             # 44824
             if lesson["type_name"] == "Занятие для студентов с задолженностью":
                 if lesson["available"] > 0:
+                    with open("stat.txt", "a") as statFile:
+                        statFile.write("time: " + str(time.time()) + " " + unix_to_time(time.time()) + " ")
+                        statFile.write(str(lesson["id"]))
+                        statFile.write(" ")
+                        statFile.write(lesson["section_name"])
+                        statFile.write(" ")
+                        statFile.write(lesson["teacher_fio"])
+                        statFile.write(" ")
+                        statFile.write(lesson["time_slot_start"])
+                        statFile.write(" ")
+                        statFile.write(lesson["time_slot_end"])
+                        statFile.write(" ")
+                        statFile.write(str(lesson["id"]))
+                        statFile.write("\n")
+
                     print(lesson["id"])
                     print(lesson["section_name"])
                     print(lesson["teacher_fio"])
@@ -110,6 +126,42 @@ def get_slots():
                     # print(lesson['limit'])
                     print(lesson["time_slot_start"])
                     print(lesson["time_slot_end"])
+
+
+
+def get_slots():
+    global storage_data, params
+    load_storage_data()    
+    while near_now() > get_deadline():
+        print("Updating token, " + str(time.time()))
+        token_upd(storage_data, token_update_config)
+    save_storage_data(storage_data)
+    cookies, headers = storage_data["cookies"], storage_data["headers"]
+    response = requests.get(
+        "https://my.itmo.ru/api/sport/my_sport/schedule/available",
+        params=params,
+        cookies=cookies,
+        headers=headers,
+    )
+    data = response.json()
+    
+    result = []
+
+    for day in data["result"]:
+        for lesson in day["lessons"]:
+            if lesson["type_name"] == "Занятие для студентов с задолженностью":
+                if lesson["available"] > 0:
+                    new_lesson = lesson
+                    new_lesson['date'] = day['date']
+                    result.append(new_lesson)
+                    # print(lesson["id"])
+                    # print(lesson["section_name"])
+                    # print(lesson["teacher_fio"])
+                    # print(lesson["lesson_level_name"])
+                    # # print(lesson['limit'])
+                    # print(lesson["time_slot_start"])
+                    # print(lesson["time_slot_end"])
+    return result
 
 
 def get_deadline():
@@ -122,10 +174,10 @@ def near_now():
 
 
 
-load_storage_data()
-while True:
-    while near_now() > get_deadline():
-        print("Updating token, " + str(time.time()))
-        token_upd(storage_data, token_update_config)
-    get_slots()
-    time.sleep(20)
+# load_storage_data()
+# while True:
+#     while near_now() > get_deadline():
+#         print("Updating token, " + str(time.time()))
+#         token_upd(storage_data, token_update_config)
+#     print_slots()
+#     time.sleep(10)
