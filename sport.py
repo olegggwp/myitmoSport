@@ -70,8 +70,8 @@ def token_upd(storage_data, token_update_config):
 
 params = {
     "building_id": "273",
-    "date_start": "2024-01-23",
-    "date_end": "2024-01-30",
+    "date_start": "2024-02-26",
+    "date_end": "2024-04-05",
 }
 
 # unix time to gmt time
